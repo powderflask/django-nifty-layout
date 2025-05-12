@@ -1,0 +1,90 @@
+# Project Configuration
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nifty_layout"
+version = "0.1.0"
+requires-python = ">=3.10, <4.0"
+description = "A flexible data composition tool to simplify writing templates."
+readme = "README.md"
+license = {file = "LICENSE"}
+authors = [
+    { name = "J Fall", email = "email@example.com" }
+]
+keywords = ["django-nifty-layout", "nifty_layout",]
+classifiers = [
+    "Development Status :: 2 - Pre-Alpha",
+    "License :: OSI Approved :: MIT License",
+    "Intended Audience :: Developers",
+    "Natural Language :: English",
+    "Programming Language :: Python :: 3",
+    "Framework :: Django",
+]
+dependencies = [
+    "django",
+    "django-tables2",
+]
+
+[project.optional-dependencies]
+format = [
+    "black",
+    "isort",
+]
+lint = [
+    "flake8",
+    "flake8-bugbear",
+]
+test = [
+    "pytest",
+    "pytest-django",
+    "pytest-cov",
+    "pytest-sugar",
+]
+utils = [
+    "tox",
+    "invoke",
+    "bumpver",
+    "pip-tools",
+]
+build = [
+    "build",
+    "twine",
+]
+[project.urls]
+Homepage = "https://github.com/powderflask/django-nifty-layout"
+Repository = "https://github.com/powderflask/django-nifty-layout"
+
+
+[project.scripts]
+"manage.py" = "nifty_layout:django_manage"
+
+
+# Other Tools
+[tool.setuptools]
+include-package-data = true  # True by default, declarations in MANIFEST.in
+
+[tool.setuptools.packages.find]
+include = ["nifty_layout", "nifty_layout.*"]
+
+[tool.bumpver]
+current_version = "0.1.0"
+version_pattern = "MAJOR.MINOR.PATCH"
+commit_message = "Bump version: {old_version} --> {new_version}"
+commit = true
+tag = true
+push = true
+
+[tool.bumpver.file_patterns]
+"pyproject.toml" = ['version = "{version}"']
+"README.md" = ['Version: {version}']
+"nifty_layout/__init__.py" = ['__version__ = "{version}"']
+
+
+[tool.black]
+target-version = ["py310", "py311"]
+
+[tool.isort]
+profile = "black"
+skip_gitignore = true
