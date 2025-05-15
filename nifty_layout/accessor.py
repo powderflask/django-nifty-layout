@@ -255,31 +255,6 @@ class Accessor(BaseAccessor):
         return self.bits[-1].replace("_", " ").title()
 
 
-class AccessorTransform:
-    """Provides a transform from standard accessor names to prefixed accessor names"""
-
-    def __init__(self, prefix: str = None):
-        self.prefix = prefix
-
-    def t(self, accessor: str) -> str:
-        """Transform key, if it exists in this KeyMap"""
-        return f"{self.prefix}__{accessor}" if self.prefix else accessor
-
-    def __call__(self, accessors: str | dict | Iterable) -> str | dict | list:
-        """Transform all value(s) in accessors and return an object of the same type"""
-        match accessors:
-            case str():
-                return self.t(accessors)
-            case dict():
-                return {
-                    self.t(accessor): value for accessor, value in accessors.items()
-                }
-            case _:
-                return [self.t(accessor) for accessor in accessors]
-
-
-def get_accessor(
-    accessor: Optional[AccessorSpec], accessor_type: Type[AccessorType] = Accessor
-) -> AccessorType | None:
-    """helper: return an Accessor instance from the given spec.  Returns None if input accessor is None."""
+def get_accessor(accessor: Optional[AccessorSpec], accessor_type: Type[AccessorType] = Accessor) -> AccessorType | None:
+    """ helper: return an Accessor instance from the given spec.  Returns None if input accessor is None. """
     return accessor_type(accessor) if isinstance(accessor, str) else accessor
