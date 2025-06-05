@@ -4,20 +4,10 @@
 
 Version: 0.1.0
 
-A flexible data composition tool to simplify writing templates.
-
-
-
+A simple but flexible layout tool for composing and transforming data for structured template components.
+Inspired by `crispy-forms` Layout, but without the forms.
 
 django-nifty-layout is free software distributed under the MIT License.
-
-
-
-## Features
-
-- Feature 1
-- Feature 2
-- Feature 3
 
 
 ## Quick Start
@@ -27,15 +17,83 @@ django-nifty-layout is free software distributed under the MIT License.
     $ pip install django-nifty-layout
     ```
 
-2. Add `'nifty_layout'` to `INSTALLED_APPS`:
-    ```python
-    INSTALLED_APPS = [
-        ...,
-        "nifty_layout",
-           ...,
-    ]
-    ```
+2. Go grab a drink, you are all done!
    
+
+## Sample Usage
+layout.py
+```
+from django.utils.formats import date_format
+
+from nifty_layout.components import (
+   DictCompositeNode as Dct,
+   FieldNode as Fld,   
+   Seq,
+)
+
+# ----- Safe Date Formatter ----- #
+date_formatter = lambda val: None if val is None else date_format(val, SHORT_DATE_FORMAT)
+
+layout = Dct(
+    dict(
+        overview=Seq(
+             "title",
+             Fld("date", formatter=date_formatter),
+             report_type",
+             "location",
+             labeller="Overview",
+        ),
+        contacts=Seq(
+            Dct(
+                dict(
+                    name="contact_name",
+                    contact_methods=Seq("contact_email"),
+                ),
+                dict(
+                    name="reported_by_name",
+                    contact_methods=Seq("reported_by_phone_num", "reported_by_email"),
+                    ),
+                )
+            ),
+            labeller="Contacts",
+        ),
+        ...
+    )
+)
+```
+
+views.py
+```
+def report_view(request, pk):
+   ...
+   obj = Report.objects.get(pk=pk)
+   ...
+   return render(request, "template.html", dict(report=layout.bind(obj)))
+```
+
+template.html
+```
+...
+<div class="report>
+  <h2>report.overview.label</h2>
+  {% for node in report.overview.children %}
+      <div class="row">
+         <div class="col label">{{ node.label }}</div>
+         <div class="col value">{{ node.value|default:"" }}</div>
+      {% endfor %}
+      </div>
+  {% endfor %}
+  <div class="row">
+    {% for contact in report.contacts.children %}
+      <div class="col">
+        {% include "contact_card.html" %}
+      </div>
+    {% endfor %}
+  </div>
+   ...
+</div>   
+```
+
 ## Get Me Some of That
 * [Source Code](https://github.com/powderflask/django-nifty-layout)
 
@@ -44,7 +102,7 @@ django-nifty-layout is free software distributed under the MIT License.
 
 [MIT License](https://github.com/powderflask/django-nifty-layout/blob/master/LICENSE)
 
-### Check Out the Demo App
+### Check Out the Demo App  ** coming soon **
 
 1. `pip install -e git+https://github.com/powderflask/django-nifty-layout.git#egg=django-nifty-layout`
 1. `python django-nifty-layout/manage.py install_demo`
@@ -63,6 +121,11 @@ and the [`cookiecutter-powder-pypackage`](https://github.com/JacobTumak/CookiePo
 
 
 ## For Developers
+Install `invoke`, `pip-tools`, `tox` for all the CLI goodness
+  ```bash
+   pip install invoke pip-tools tox
+   ```
+
 Initialise the development environment using the invoke task
    ```bash
    inv tox.venv
@@ -71,9 +134,10 @@ Or create it with tox directly
    ```bash
    tox d -e dev .venv
    ```
-Or install the dev requirements with pip
+Or build and install the dev requirements with pip
    ```bash
-   pip install -r reqirements_dev.txt
+   inv deps.compile-dev
+   pip install -r requirements_dev.txt
    ```
 
 ### Tests
@@ -101,8 +165,6 @@ or run tox environments in parallel using
    ```bash
    $ bumpver show
    ```
-
-
 
 ### Build / Deploy Automation
  * [invoke](https://www.pyinvoke.org/)
