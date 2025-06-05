@@ -1,0 +1,89 @@
+{% extends "reports/base.html" %}
+
+{% block title %}Demo Report{% endblock %}
+
+{% block content %}
+<h1>Site Inspection Report</h1>
+
+<!-- Inspection Info -->
+<article>
+  <header><strong>Inspection Info</strong></header>
+  <ul>
+    {% for field in bound_node.inspection_info %}
+      <li><strong>{{ field.label }}:</strong> {{ field.value }}</li>
+    {% endfor %}
+  </ul>
+</article>
+
+<div class="grid">
+	<!-- Site Details -->
+	<article>
+	  <header><strong>Site Details</strong></header>
+	  <ul>
+	    {% for field in bound_node.site_details %}
+	      <li><strong>{{ field.label }}:</strong> {{ field.value }}</li>
+	    {% endfor %}
+	  </ul>
+	</article>
+
+	<!-- Inspector Details -->
+	<article>
+	  <header><strong>Inspector Details</strong></header>
+	  <ul>
+	    {% for field in bound_node.inspector_details %}
+	      <li><strong>{{ field.label }}:</strong> {{ field.value }}</li>
+	    {% endfor %}
+	  </ul>
+	</article>
+</div>
+
+<!-- Findings Section -->
+<article>
+  <header><strong>{{ bound_node.findings.summary.label }}</strong></header>
+  {{ bound_node.findings.summary.value }}
+</article>
+<div class="grid">
+  {% for field in bound_node.findings.all %}
+    <article>
+      <header><strong>{{ field.label }}</strong></header>
+      {{ field.value }}
+    </article>
+  {% endfor %}
+</div>
+
+<!-- Ratings Section -->
+<article>
+  <header><strong>Ratings</strong></header>
+  <div class="grid">
+    {% for field in bound_node.ratings.all %}
+      <div>
+        <strong>{{ field.label }}</strong>&emsp;{{ field.value }}
+      </div>
+    {% endfor %}
+  </div>
+	<footer>
+		<strong>{{ bound_node.ratings.overall.label }}</strong>&emsp;{{ bound_node.ratings.overall.value }}<br />
+	</footer>
+</article>
+
+<!-- Recommendations -->
+<article>
+  <header><strong>Recommendations</strong></header>
+  <ul>
+    {% for field in bound_node.recommendations %}
+      <li><strong>{{ field.label }}:</strong> {{ field.value }}</li>
+    {% endfor %}
+  </ul>
+</article>
+
+<!-- Metadata Section -->
+<article>
+  <header><strong>Metadata</strong></header>
+  <ul>
+    {% for field in bound_node.metadata %}
+      <li><strong>{{ field.label }}:</strong> {{ field.value }}</li>
+    {% endfor %}
+  </ul>
+</article>
+
+{% endblock %}

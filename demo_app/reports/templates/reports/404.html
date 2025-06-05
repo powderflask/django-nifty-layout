@@ -1,0 +1,13 @@
+{% extends "reports/base.html" %}
+
+{% block title %}No Report Found{% endblock %}
+
+{% block content %}
+<section>
+	<h1>Oops...</h1>
+	<article>
+		<p>No report was found in the database. Please seed the database by running
+			<code>python manage.py seed_report</code> before trying again!</p>
+	</article>
+</section>
+{% endblock %}
