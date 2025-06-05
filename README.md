@@ -44,16 +44,15 @@ layout = Dct(
              labeller="Overview",
         ),
         contacts=Seq(
-            Dct(
-                dict(
+            Dct(dict(
                     name="contact_name",
                     contact_methods=Seq("contact_email"),
-                ),
-                dict(
+                ), labeller="Primary Contact"
+            ),
+            Dct(dict(
                     name="reported_by_name",
                     contact_methods=Seq("reported_by_phone_num", "reported_by_email"),
-                    ),
-                )
+                 ), labeller="Reported By"
             ),
             labeller="Contacts",
         ),
@@ -76,7 +75,7 @@ template.html
 ...
 <div class="report>
   <h2>report.overview.label</h2>
-  {% for node in report.overview.children %}
+  {% for node in report.overview %}
       <div class="row">
          <div class="col label">{{ node.label }}</div>
          <div class="col value">{{ node.value|default:"" }}</div>
@@ -84,7 +83,7 @@ template.html
       </div>
   {% endfor %}
   <div class="row">
-    {% for contact in report.contacts.children %}
+    {% for contact in report.contacts %}
       <div class="col">
         {% include "contact_card.html" %}
       </div>
@@ -102,12 +101,13 @@ template.html
 
 [MIT License](https://github.com/powderflask/django-nifty-layout/blob/master/LICENSE)
 
-### Check Out the Demo App  ** coming soon **
+### Check Out the Demo App
 
 1. `pip install -e git+https://github.com/powderflask/django-nifty-layout.git#egg=django-nifty-layout`
-1. `python django-nifty-layout/manage.py install_demo`
-1. `python django-nifty-layout/manage.py runserver`
+1. `inv demo.install`  ** coming soon **
+1. `python demo_app/manage.py runserver`
 
+See [demo_app/README](demo_app/README.md)
 
 ### Acknowledgments
 This project would be impossible to maintain without the help of our generous [contributors](https://github.com/powderflask/django-nifty-layout/graphs/contributors)
