@@ -2,7 +2,7 @@
 
 [![PyPI Version](https://img.shields.io/pypi/v/nifty_layout.svg)](https://pypi.python.org/pypi/django-nifty-layout) ![Test with tox](https://github.com/powderflask/django-nifty-layout/actions/workflows/tox.yaml/badge.svg) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/powderflask/django-nifty-layout)
 
-Version: 0.1.0
+Version: 0.1.1
 
 A simple but flexible layout tool for composing and transforming data for structured template components.
 Inspired by `crispy-forms` Layout, but without the forms.

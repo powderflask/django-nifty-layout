@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "django-nifty-layout"
-version = "0.1.0"
+version = "0.1.1"
 requires-python = ">=3.10, <4.0"
 description = "A flexible data composition tool to simplify writing templates."
 readme = "README.md"
@@ -68,7 +68,7 @@ include-package-data = true  # True by default, declarations in MANIFEST.in
 include = ["nifty_layout", "nifty_layout.*"]
 
 [tool.bumpver]
-current_version = "0.1.0"
+current_version = "0.1.1"
 version_pattern = "MAJOR.MINOR.PATCH"
 commit_message = "Bump version: {old_version} --> {new_version}"
 commit = true
