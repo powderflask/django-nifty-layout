@@ -24,7 +24,6 @@ classifiers = [
 ]
 dependencies = [
     "django",
-    "django-tables2",
 ]
 
 [project.optional-dependencies]
