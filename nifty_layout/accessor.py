@@ -1,18 +1,16 @@
 from __future__ import annotations
 
 import warnings
-
 from collections.abc import Iterable, Mapping, Sequence
-from typing import TypeAlias, Protocol, Any, Optional, TypeVar, Type
+from typing import Any, Optional, Protocol, Type, TypeAlias, TypeVar
 
 from django.core.exceptions import FieldDoesNotExist
 from django.db import models
 
-
 AccessorContext: TypeAlias = object | Mapping[str, Any] | Sequence
 
 # Any type that implements the protocol
-AccessorType = TypeVar('AccessorType', bound='AccessorProtocol')
+AccessorType = TypeVar("AccessorType", bound="AccessorProtocol")
 
 # An AccessorSpec allows an accessor to be specified by its string representation
 AccessorSpec: TypeAlias = str | AccessorType
@@ -26,20 +24,21 @@ class AccessorProtocol(Protocol):
     Design note: this combines API for a generic Accessor with API for a more specific "ModelFieldAccessor"
     This violates SR principle a little, but keeps things simple and don't forsee any problems.
     """
+
     def __init__(self, value: str):
-        """ Initialise the accessor with a string specifying the "path" used to resolve access to a value. """
+        """Initialise the accessor with a string specifying the "path" used to resolve access to a value."""
         ...
 
     def resolve(self, context: AccessorContext) -> Any:
-        """ Return the value of this accessor in the given context. """
+        """Return the value of this accessor in the given context."""
         ...
 
     def get_field(self, model: models.Model | type[models.Model]) -> models.Field:
-        """ Resolve this accessor using given model as context to return the model field rather than its value. """
+        """Resolve this accessor using given model as context to return the model field rather than its value."""
         ...
 
     def get_label(self, model: models.Model | type[models.Model]) -> str:
-        """ Resolve this accessor using given model as context to return the model field verbose name. """
+        """Resolve this accessor using given model as context to return the model field verbose name."""
         ...  # Note: this method is not defined on base tables2 Accessor, see extension below.
 
 
@@ -48,6 +47,7 @@ class AccessorProtocol(Protocol):
 #    to avoid otherwise unnecessary dependency on `table2`, but you should use tables2 anyhow, its awesome !!
 #    Licence:  https://github.com/jieter/django-tables2/blob/master/LICENSE
 #####
+
 
 class BaseAccessor(str):
     """
@@ -64,13 +64,15 @@ class BaseAccessor(str):
     SEPARATOR = "__"
 
     ALTERS_DATA_ERROR_FMT = "Refusing to call {method}() because `.alters_data = True`"
-    LOOKUP_ERROR_FMT = (
-        "Failed lookup for key [{key}] in {context}, when resolving the accessor {accessor}"
-    )
+    LOOKUP_ERROR_FMT = "Failed lookup for key [{key}] in {context}, when resolving the accessor {accessor}"
 
     def __init__(self, value, callable_args=None, callable_kwargs=None):
-        self.callable_args = callable_args or getattr(value, "callable_args", None) or []
-        self.callable_kwargs = callable_kwargs or getattr(value, "callable_kwargs", None) or {}
+        self.callable_args = (
+            callable_args or getattr(value, "callable_args", None) or []
+        )
+        self.callable_kwargs = (
+            callable_kwargs or getattr(value, "callable_kwargs", None) or {}
+        )
         super().__init__()
 
     def __new__(cls, value, callable_args=None, callable_kwargs=None):
@@ -152,7 +154,9 @@ class BaseAccessor(str):
                             TypeError,  # unsubscriptable object
                         ):
                             current_context = (
-                                type(current) if isinstance(current, models.Model) else current
+                                type(current)
+                                if isinstance(current, models.Model)
+                                else current
                             )
 
                             raise ValueError(
@@ -162,7 +166,9 @@ class BaseAccessor(str):
                             )
                 if callable(current):
                     if safe and getattr(current, "alters_data", False):
-                        raise ValueError(self.ALTERS_DATA_ERROR_FMT.format(method=current.__name__))
+                        raise ValueError(
+                            self.ALTERS_DATA_ERROR_FMT.format(method=current.__name__)
+                        )
                     if not getattr(current, "do_not_call_in_templates", False):
                         current = current(*self.callable_args, **self.callable_kwargs)
                 # Important that we break in None case, or a relationship
@@ -240,7 +246,7 @@ class Accessor(BaseAccessor):
     """
 
     def get_label(self, model: models.Model | type[models.Model]) -> str:
-        """ Resolve this accessor using given model as context to return the model field verbose name. """
+        """Resolve this accessor using given model as context to return the model field verbose name."""
         if isinstance(model, models.Model):
             model = type(model)
         field = self.get_field(model)
@@ -265,11 +271,15 @@ class AccessorTransform:
             case str():
                 return self.t(accessors)
             case dict():
-                return {self.t(accessor): value for accessor, value in accessors.items()}
+                return {
+                    self.t(accessor): value for accessor, value in accessors.items()
+                }
             case _:
                 return [self.t(accessor) for accessor in accessors]
 
 
-def get_accessor(accessor: Optional[AccessorSpec], accessor_type: Type[AccessorType] = Accessor) -> AccessorType | None:
-    """ helper: return an Accessor instance from the given spec.  Returns None if input accessor is None. """
+def get_accessor(
+    accessor: Optional[AccessorSpec], accessor_type: Type[AccessorType] = Accessor
+) -> AccessorType | None:
+    """helper: return an Accessor instance from the given spec.  Returns None if input accessor is None."""
     return accessor_type(accessor) if isinstance(accessor, str) else accessor
