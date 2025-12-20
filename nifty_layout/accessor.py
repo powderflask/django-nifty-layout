@@ -2,20 +2,15 @@ from __future__ import annotations
 
 import warnings
 from collections.abc import Iterable, Mapping, Sequence
-from typing import Any, Optional, Protocol, Type, TypeAlias, TypeVar
+from typing import Any, Optional, Protocol, Type, TypeAlias, runtime_checkable
 
 from django.core.exceptions import FieldDoesNotExist
 from django.db import models
 
 AccessorContext: TypeAlias = object | Mapping[str, Any] | Sequence
 
-# Any type that implements the protocol
-AccessorType = TypeVar("AccessorType", bound="AccessorProtocol")
 
-# An AccessorSpec allows an accessor to be specified by its string representation
-AccessorSpec: TypeAlias = str | AccessorType
-
-
+@runtime_checkable
 class AccessorProtocol(Protocol):
     """
     A string that describes how to resolve a value from an arbitrarily deeply nested object, dictionary, or sequence.
@@ -252,9 +247,16 @@ class Accessor(BaseAccessor):
         field = self.get_field(model)
         if field and field.verbose_name:
             return field.verbose_name
-        return self.bits[-1].replace("_", " ").title()
+        return "_".join(self.split("__")).replace("_", " ").title()
 
 
-def get_accessor(accessor: Optional[AccessorSpec], accessor_type: Type[AccessorType] = Accessor) -> AccessorType | None:
+# Any type that implements the protocol, but type-checkers don't always seem to play nicely with Protocols.
+AccessorType: TypeAlias = BaseAccessor
+
+# An AccessorSpec allows an accessor to be specified by its string representation
+AccessorSpec: TypeAlias = str | Accessor  # technically any Accessor is-a str, so this is just for clarity.
+
+
+def get_accessor(accessor: Optional[AccessorSpec], accessor_type: Type[AccessorType] = Accessor) -> Accessor | None:
     """ helper: return an Accessor instance from the given spec.  Returns None if input accessor is None. """
-    return accessor_type(accessor) if isinstance(accessor, str) else accessor
+    return accessor if isinstance(accessor, (BaseAccessor, AccessorProtocol)) else accessor_type(accessor)

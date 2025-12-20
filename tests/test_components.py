@@ -6,23 +6,56 @@ from typing import Any
 from django.contrib.auth import get_user_model
 from django.test import SimpleTestCase
 
-from nifty_layout.components import field_labeller, DictCompositeNode, FieldNode, BoundNode
+from nifty_layout.components import (
+    field_labeller, DictCompositeNode, FieldNode, BoundNode, get_field_display,
+    get_formatted_labeller
+)
 from nifty_layout.accessor import AccessorSpec
 
 User = get_user_model()
 
 
-class FormatterTests(SimpleTestCase):
-    """Test suite for template formatter functionality."""
+class GetFieldDisplayTests(SimpleTestCase):
+    """Test suite for template get_field_display functionality."""
 
-    def test_currency_formatter(self):
-        """Test formatting numbers as currency."""
-        currency_formatter = partial(self._template_formatter, template="${:,.2f}")
-        self.assertEqual(currency_formatter(123.4567), "$123.46")
+    @dataclass
+    class SimpleObject:
+        a: int = 42
+        b: str = "Question?"
+        c: SimpleNamespace = SimpleNamespace(x=1, y=99, get_x_display=lambda: f"X:{1}")
 
-    @staticmethod
-    def _template_formatter(value: Any, template: str, **context) -> str:
-        return template.format(value, **context)
+        def get_a_display(self):
+            return f"The answer is {self.a}"
+
+    def test_get_field_display_with_simple_obj(self):
+        """Test formatter usage with a simple object that defines a "magic" get_foo_display method."""
+        obj = self.SimpleObject()
+
+        obj_field_formatter = lambda accessor: get_field_display("default", record=obj, accessor=accessor)
+        self.assertEqual(obj_field_formatter('c__y'), "99")
+        self.assertEqual(obj_field_formatter('c__x'), "X:1")
+
+    def test_get_field_display_with_accessor(self):
+        """Test formatter usage with a simple object that defines a "magic" get_foo_display method."""
+        obj = self.SimpleObject()
+
+        obj_field_formatter = lambda accessor: get_field_display("default", record=obj, accessor=accessor)
+        self.assertEqual(obj_field_formatter('a'), "The answer is 42")
+        self.assertEqual(obj_field_formatter('b'), "Question?")
+
+    def test_get_field_display_with_user_model(self):
+        """Test labelling fields for a User instance."""
+        larry = User(username="lmapmaker", first_name="Larry", last_name="Mapmaker")
+        larry.get_full_name = lambda: f"{larry.first_name} {larry.last_name}"
+
+        # this is the "normal" way nifty Node's make use a FieldFormatter: bind to accessor, then resolve for data
+        first_name_formatter = partial(get_field_display, accessor="first_name")
+        self.assertEqual(first_name_formatter("default", record=larry), "Larry")
+
+        user_field_formatter = lambda accessor: get_field_display("default", record=larry, accessor=accessor)
+        self.assertEqual(user_field_formatter("first_name"), "Larry")
+        self.assertEqual(user_field_formatter("last_name"), "Mapmaker")
+        self.assertEqual(user_field_formatter("get_full_name"), "Larry Mapmaker")
 
 
 class LabellerTests(SimpleTestCase):
@@ -38,7 +71,7 @@ class LabellerTests(SimpleTestCase):
         def get_b_label(self):
             return f"What is {self.a_label}"
 
-    def test_labeller_with_partial(self):
+    def test_labeller_with_object(self):
         """Test labeller usage with partials."""
         obj = self.SimpleObject()
 
@@ -52,6 +85,7 @@ class LabellerTests(SimpleTestCase):
         larry = User(username="lmapmaker", first_name="Larry", last_name="Mapmaker")
         larry.get_full_name = lambda: f"{larry.first_name} {larry.last_name}"
 
+        # this is the "normal" way nifty Node's make use a FieldLabeller: bind to accessor, then resolve for data
         first_name_labeller = partial(field_labeller, accessor="first_name")
         self.assertEqual(first_name_labeller(larry), "first name")
 
@@ -59,6 +93,13 @@ class LabellerTests(SimpleTestCase):
         self.assertEqual(user_field_labeller("first_name"), "first name")
         self.assertEqual(user_field_labeller("last_name"), "last name")
         self.assertEqual(user_field_labeller("get_full_name"), "Get Full Name")
+
+    def test_get_formatted_labeller(self):
+        labeller = get_formatted_labeller(
+            labeller=lambda obj, **kwargs: "ring",
+            formatter=lambda label, **kwargs: f"the one {label}"
+        )
+        self.assertEqual(labeller(None), "the one ring")
 
 
 class FieldNodeTests(SimpleTestCase):
@@ -124,7 +165,8 @@ class CompositeNodeTests(SimpleTestCase):
 
         bnd_node = obj_node.bind(obj)
         self.assertEqual(bnd_node['field'].label, "A Label")
-        self.assertEqual(bnd_node['field'].value, 987)
+        self.assertEqual(bnd_node['field'].raw_value, 987)
+        self.assertEqual(bnd_node['field'].value, "987")
         self.assertEqual(bnd_node['comments'].value, "some comments!")
 
     @staticmethod
