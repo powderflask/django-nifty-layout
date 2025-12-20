@@ -27,11 +27,37 @@ from django.template.loader import get_template
 
 from .accessor import Accessor, AccessorSpec, AccessorType, get_accessor
 
-# A Formatter is a function that takes a value returns a formatted value
+# A Formatter is a function that takes a value returns a formatted value - must accept kwargs!
 Formatter: TypeAlias = Callable[[Any, ...], str]
 
-# A Labeller is a function that takes an accessor and returns string label for the attribute
-Labeller: TypeAlias = Callable[[AccessorSpec, ...], str]
+# A Labeller is a function that takes a data record and returns string label for it - must accept kwargs!
+Labeller: TypeAlias = Callable[[Any, ...], str]
+
+# A Formatter that expects an object and the accessor to an attribute on that object
+FieldFormatter: TypeAlias = Callable[[Any, object, AccessorSpec, ...], str]
+
+# A Labeller that expects an object and the accessor to an attribute on that object
+FieldLabeller: TypeAlias = Callable[[object, AccessorSpec, ...], str]
+
+
+def get_field_display(value: Any, record: object | models.Model, accessor: AccessorSpec, **unused) -> str:
+    """Return the display value for the given accessor of given object, which could be a django Model instance.
+
+    If `obj` is a model instance, returns the display value of the accessor field, if accessor is a model field.
+    Looks for magic attribute / method: `get_foo_display` on obj, otherwise returns str(raw_value)
+    Returns default value if attribute does not exist or has a null value.
+    """
+    accessor = get_accessor(accessor)
+    penultimate, field_name = accessor.penultimate(record)
+    get_foo_display = f"get_{field_name}_display"
+    try:
+        display = getattr(penultimate, get_foo_display)
+    except AttributeError:
+        try:
+            display = accessor.resolve(record) or value
+        except ValueError:
+            display = value
+    return str(display() if callable(display) else display)
 
 
 def field_labeller(obj: object | models.Model, accessor: AccessorSpec, **unused) -> str:
@@ -41,7 +67,7 @@ def field_labeller(obj: object | models.Model, accessor: AccessorSpec, **unused)
     Otherwise, looks for magic attribute / method:  `foo_label` or `get_foo_label` on obj.
     In either case, if no labelling is provided by obj, defines a title-case label based on accessor.
     """
-    accessor = Accessor(accessor) if isinstance(accessor, str) else accessor
+    accessor = get_accessor(accessor)
     if isinstance(obj, models.Model):
         return accessor.get_label(obj)
     # look for "foo_label" attribute or "get_foo_label" method on object, if there isn't one, use the attribute name
@@ -53,9 +79,7 @@ def field_labeller(obj: object | models.Model, accessor: AccessorSpec, **unused)
     return label
 
 
-def get_formatted_labeller(
-    labeller, formatter
-):  # todo - add tests or change labelling/formatting logic
+def get_formatted_labeller(labeller, formatter):
     def formatted_labeller(*args, **kwargs):
         return formatter(labeller(*args, **kwargs))
 
@@ -112,9 +136,14 @@ class BoundNode(Iterable):
                 raise ValueError(f"Unexpected value for template: {template}.")
 
     @property
+    def raw_value(self):
+        """Return the formatted display value from bound data object."""
+        return self.node.get_raw_value(self.data)
+
+    @property
     def value(self):
-        """Fetch the data value from data object and format it."""
-        return self.node.get_formatted_value(self.node.get_display_value(self.data))
+        """Return the formatted display value from bound data object."""
+        return self.node.get_formatted_value(self.data)
 
     @property
     def label(self):
@@ -195,7 +224,6 @@ class BaseNode(Iterable, abc.ABC):
 
     default_formatter: Formatter | bool = False  # default does no formatting
     default_labeller: Labeller | str | bool = False  # default has no label
-    display_value_default: str | None = ""  # default display value when accessor value is None
     bound_node_type: type[BoundNode] = (
         BoundNode  # data type returned by `bind` operation
     )
@@ -226,18 +254,17 @@ class BaseNode(Iterable, abc.ABC):
         """Extract and return the raw value for this Node from the given data object"""
         return data
 
-    def get_display_value(self, data: Any) -> Any:
-        """Extract and return the display value for this Node from the given data object"""
-        return self.get_raw_value(data) or self.display_value_default
-
-    def get_formatted_value(self, value: Any) -> str | Any:
-        """Return formatted version of given display value"""
-        return self.formatter(value) if self.formatter else value
+    def get_formatted_value(self, data: Any) -> str | Any:
+        """Extract and return a formatted presentation value for this Node from the given data object  """
+        return (
+            self.formatter(self.get_raw_value(data), record=data, node=self)
+            if self.formatter else self.get_raw_value(data)
+        )
 
     def get_label(self, data: Any) -> str | None:
         """Return a label for the given data object"""
         return (
-            self.labeller(data)
+            self.labeller(data, node=self)
             if callable(self.labeller)
             else str(self.labeller) if self.labeller else None
         )
@@ -260,10 +287,10 @@ class AtomicNode(BaseNode, abc.ABC):
 class FieldNode(AtomicNode):
     """Basic atomic node for encapsulating access to the data for a single field using a Accessor"""
 
-    default_accessor_type: Type[AccessorType] = (
-        Accessor  # The Accessor type used to wrap naked accessor spec.
-    )
-    default_labeller: Labeller | str | bool = field_labeller
+    # The Accessor type used to wrap naked accessor spec.
+    default_accessor_type: Type[AccessorType] = Accessor
+    default_formatter: FieldFormatter | str | bool = get_field_display
+    default_labeller: FieldLabeller | str | bool = field_labeller
 
     def __init__(
         self,
@@ -273,34 +300,22 @@ class FieldNode(AtomicNode):
         template: Optional[TemplateType] = None,
     ):
         """Parameters passed as None default to Node type's default values."""
+        self.accessor = get_accessor(accessor, type(self).default_accessor_type)
+        formatter = (
+            formatter
+            if formatter is not None
+            else partial(type(self).default_formatter, accessor=self.accessor)
+        )
         labeller = (
             labeller
             if labeller is not None
-            else partial(type(self).default_labeller, accessor=accessor)
+            else partial(type(self).default_labeller, accessor=self.accessor)
         )
         super().__init__(formatter=formatter, labeller=labeller, template=template)
-        self.accessor = get_accessor(accessor, type(self).default_accessor_type)
 
     def get_raw_value(self, data: Any) -> Any:
         """Extract and return the raw value for this Node from the given data object"""
         return self.accessor.resolve(data)
-
-    def get_display_value(self, data: Any) -> str:
-        """Extract and return the display value for this Node from the given data object
-
-        If data has "magic" method `get_foo_display`, or data.accessor is callable, it is called to get display value
-        otherwise self.get_raw_value() is returned, substituting self.display_value_default for None values.
-        """
-        penultimate, field_name = self.accessor.penultimate(data)
-        get_foo_display = f"get_{field_name}_display"
-        try:
-            display = getattr(penultimate, get_foo_display)
-        except AttributeError:
-            try:
-                display = self.get_raw_value(data) or self.display_value_default
-            except ValueError:
-                display = self.display_value_default
-        return str(display() if callable(display) else display)
 
 
 # define extended FieldNodes for common use-cases, assembled with custom labellers and formatters
