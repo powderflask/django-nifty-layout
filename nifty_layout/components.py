@@ -114,7 +114,7 @@ class BoundNode(Iterable):
     @property
     def value(self):
         """Fetch the data value from data object and format it."""
-        return self.node.get_formatted_value(self.node.get_raw_value(self.data))
+        return self.node.get_formatted_value(self.node.get_display_value(self.data))
 
     @property
     def label(self):
@@ -195,6 +195,7 @@ class BaseNode(Iterable, abc.ABC):
 
     default_formatter: Formatter | bool = False  # default does no formatting
     default_labeller: Labeller | str | bool = False  # default has no label
+    display_value_default: str | None = ""  # default display value when accessor value is None
     bound_node_type: type[BoundNode] = (
         BoundNode  # data type returned by `bind` operation
     )
@@ -225,8 +226,12 @@ class BaseNode(Iterable, abc.ABC):
         """Extract and return the raw value for this Node from the given data object"""
         return data
 
+    def get_display_value(self, data: Any) -> Any:
+        """Extract and return the display value for this Node from the given data object"""
+        return self.get_raw_value(data) or self.display_value_default
+
     def get_formatted_value(self, value: Any) -> str | Any:
-        """Return formatted version of given raw value"""
+        """Return formatted version of given display value"""
         return self.formatter(value) if self.formatter else value
 
     def get_label(self, data: Any) -> str | None:
@@ -279,6 +284,23 @@ class FieldNode(AtomicNode):
     def get_raw_value(self, data: Any) -> Any:
         """Extract and return the raw value for this Node from the given data object"""
         return self.accessor.resolve(data)
+
+    def get_display_value(self, data: Any) -> str:
+        """Extract and return the display value for this Node from the given data object
+
+        If data has "magic" method `get_foo_display`, or data.accessor is callable, it is called to get display value
+        otherwise self.get_raw_value() is returned, substituting self.display_value_default for None values.
+        """
+        penultimate, field_name = self.accessor.penultimate(data)
+        get_foo_display = f"get_{field_name}_display"
+        try:
+            display = getattr(penultimate, get_foo_display)
+        except AttributeError:
+            try:
+                display = self.get_raw_value(data) or self.display_value_default
+            except ValueError:
+                display = self.display_value_default
+        return str(display() if callable(display) else display)
 
 
 # define extended FieldNodes for common use-cases, assembled with custom labellers and formatters

@@ -1,14 +1,16 @@
 from dataclasses import dataclass
 from functools import partial
+from types import SimpleNamespace
 from typing import Any
 
 from django.contrib.auth import get_user_model
 from django.test import SimpleTestCase
 
-from nifty_layout.components import field_labeller, DictCompositeNode, FieldNode
+from nifty_layout.components import field_labeller, DictCompositeNode, FieldNode, BoundNode
 from nifty_layout.accessor import AccessorSpec
 
 User = get_user_model()
+
 
 class FormatterTests(SimpleTestCase):
     """Test suite for template formatter functionality."""
@@ -57,6 +59,44 @@ class LabellerTests(SimpleTestCase):
         self.assertEqual(user_field_labeller("first_name"), "first name")
         self.assertEqual(user_field_labeller("last_name"), "last name")
         self.assertEqual(user_field_labeller("get_full_name"), "Get Full Name")
+
+
+class FieldNodeTests(SimpleTestCase):
+    """Test suite for FieldNode functionality."""
+
+    @dataclass
+    class SimpleObject:
+        a: int = 42
+        b: str = "Question?"
+        c: SimpleNamespace = SimpleNamespace(x=1, y=99, z=lambda: 42, get_x_display=lambda: f"X:{1}")
+
+        def get_a_display(self):
+            return f"The answer is {self.a}"
+
+    @staticmethod
+    def _fld(obj: Any, accessor: AccessorSpec, **kwargs) -> BoundNode:
+        return FieldNode(accessor, **kwargs).bind(obj)
+
+    def test_display_value_with_simple_obj(self):
+        obj = self.SimpleObject()
+
+        self.assertEqual(self._fld(obj, "a").value, "The answer is 42")
+        self.assertEqual(self._fld(obj, "b").value, "Question?")
+
+    def test_display_value_with_deep_accessor(self):
+        obj = self.SimpleObject()
+
+        self.assertEqual(self._fld(obj, "c__y").value, "99")
+        self.assertEqual(self._fld(obj, "c__x").value, "X:1")
+        self.assertEqual(self._fld(obj, "c__z").value, "42")
+
+    def test_display_value_with_user_model(self):
+        larry = User(username="lmapmaker", first_name="Larry", last_name="Mapmaker")
+        larry.get_full_name = lambda: f"{larry.first_name} {larry.last_name}"
+
+        self.assertEqual(self._fld(larry, "first_name").value, "Larry")
+        self.assertEqual(self._fld(larry, "last_name").value, "Mapmaker")
+        self.assertEqual(self._fld(larry, "get_full_name").value, "Larry Mapmaker")
 
 
 class CompositeNodeTests(SimpleTestCase):
