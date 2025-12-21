@@ -32,7 +32,7 @@ from nifty_layout.components import (
 )
 
 # ----- Safe Date Formatter ----- #
-date_formatter = lambda val: None if val is None else date_format(val, SHORT_DATE_FORMAT)
+date_formatter = lambda val, **kwargs: "" if val is None else date_format(val, SHORT_DATE_FORMAT)
 
 layout = Dct(
     dict(
