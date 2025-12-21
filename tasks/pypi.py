@@ -47,11 +47,10 @@ def check(c, dist):
     pre=[clean],
     post=[clean_task.clean_all],
     help={
-        "api-token": "Obtain an API key from https://pypi.org/manage/account/",
         "repo": "Specify:  pypi  for a production release.",
     },
 )
-def release(c, api_token, repo="testpypi"):
+def release(c, repo="testpypi"):
     """Build release and upload to PyPI"""
     print("Fetching version...")
     get_version(c)

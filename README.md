@@ -1,6 +1,6 @@
 # django-nifty-layout
 
-[![PyPI Version](https://img.shields.io/pypi/v/nifty_layout.svg)](https://pypi.python.org/pypi/django-nifty-layout) ![Test with tox](https://github.com/powderflask/django-nifty-layout/actions/workflows/tox.yaml/badge.svg) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/powderflask/django-nifty-layout)
+[![PyPI Version](https://img.shields.io/pypi/v/django_nifty_layout.svg)](https://pypi.python.org/pypi/django-nifty-layout) ![Test with tox](https://github.com/powderflask/django-nifty-layout/actions/workflows/tox.yaml/badge.svg) [![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/powderflask/django-nifty-layout)
 
 Version: 0.1.1
 
