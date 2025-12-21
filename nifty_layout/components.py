@@ -43,7 +43,7 @@ FieldLabeller: TypeAlias = Callable[[object, AccessorSpec, ...], str]
 def get_field_display(value: Any, record: object | models.Model, accessor: AccessorSpec, **unused) -> str:
     """Return the display value for the given accessor of given object, which could be a django Model instance.
 
-    If `obj` is a model instance, returns the display value of the accessor field, if accessor is a model field.
+    Returns a display value of the accessor field on record, using value as a default.
     Looks for magic attribute / method: `get_foo_display` on obj, otherwise returns str(raw_value)
     Returns default value if attribute does not exist or has a null value.
     """
@@ -137,12 +137,12 @@ class BoundNode(Iterable):
 
     @property
     def raw_value(self):
-        """Return the formatted display value from bound data object."""
+        """Return the raw value from this node for the bound data object."""
         return self.node.get_raw_value(self.data)
 
     @property
     def value(self):
-        """Return the formatted display value from bound data object."""
+        """Return the formatted display value from this node for bound data object."""
         return self.node.get_formatted_value(self.data)
 
     @property
