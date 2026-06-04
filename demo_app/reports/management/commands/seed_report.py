@@ -1,8 +1,6 @@
 from django.core.management.base import BaseCommand
 from django.utils import timezone
-
 from reports.models import SiteInspectionReport
-
 
 # from reports.models import SiteInspectionReport
 
@@ -55,8 +53,7 @@ class Command(BaseCommand):
         }
 
         report, created = SiteInspectionReport.objects.get_or_create(
-            report_id=example_data["report_id"],
-            defaults=example_data
+            report_id=example_data["report_id"], defaults=example_data
         )
 
         if created:

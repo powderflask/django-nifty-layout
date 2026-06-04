@@ -50,7 +50,9 @@ class TestAccessor:
 
     def test_get_label_default_no_such_field(self):
         place_name = Accessor("place__name")
-        assert place_name.get_label(None) == "Place Name"  # default label is title-case of split accessor
+        assert (
+            place_name.get_label(None) == "Place Name"
+        )  # default label is title-case of split accessor
         city = Accessor("city")
         assert city.get_label(None) == "City"
         owner_name = Accessor("owner__name")
@@ -58,7 +60,9 @@ class TestAccessor:
 
     def test_get_label_from_field_default_verbose_name(self):
         city = Accessor("city")
-        assert city.get_label(Place) == "city"  # django's default verbose_name is not title case!
+        assert (
+            city.get_label(Place) == "city"
+        )  # django's default verbose_name is not title case!
         profile = OwnerProfile()
         owner_name = Accessor("owner__name")
         assert owner_name.get_label(profile) == "name"
@@ -76,6 +80,7 @@ class TestAccessor:
 
 class TestGetAccessor:
     """Test get_accessor method."""
+
     def test_get_accessor_basics(self):
         foo = get_accessor("foo")
         assert isinstance(foo, Accessor)

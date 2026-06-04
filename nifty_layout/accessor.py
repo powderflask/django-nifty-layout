@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import warnings
-from collections.abc import Iterable, Mapping, Sequence
+from collections.abc import Mapping, Sequence
 from typing import Any, Optional, Protocol, Type, TypeAlias, runtime_checkable
 
 from django.core.exceptions import FieldDoesNotExist
@@ -84,7 +84,7 @@ class BaseAccessor(str):
 
         return instance
 
-    def resolve(self, context, safe=True, quiet=False):
+    def resolve(self, context, safe=True, quiet=False):  # noqa: C901
         """
         Return an object described by the accessor by traversing the attributes of *context*.
 
@@ -254,9 +254,17 @@ class Accessor(BaseAccessor):
 AccessorType: TypeAlias = BaseAccessor
 
 # An AccessorSpec allows an accessor to be specified by its string representation
-AccessorSpec: TypeAlias = str | Accessor  # technically any Accessor is-a str, so this is just for clarity.
+AccessorSpec: TypeAlias = (
+    str | Accessor
+)  # technically any Accessor is-a str, so this is just for clarity.
 
 
-def get_accessor(accessor: Optional[AccessorSpec], accessor_type: Type[AccessorType] = Accessor) -> Accessor | None:
-    """ helper: return an Accessor instance from the given spec.  Returns None if input accessor is None. """
-    return accessor if isinstance(accessor, (BaseAccessor, AccessorProtocol)) else accessor_type(accessor)
+def get_accessor(
+    accessor: Optional[AccessorSpec], accessor_type: Type[AccessorType] = Accessor
+) -> Accessor | None:
+    """helper: return an Accessor instance from the given spec.  Returns None if input accessor is None."""
+    return (
+        accessor
+        if isinstance(accessor, (BaseAccessor, AccessorProtocol))
+        else accessor_type(accessor)
+    )

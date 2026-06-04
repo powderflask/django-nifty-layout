@@ -1,7 +1,9 @@
 from pathlib import Path
+
 from invoke import task
 
 PROJECT_ROOT = Path(__file__).absolute().parent.parent
+
 
 def get_runner_args(c) -> list[str]:
     args = []
@@ -11,7 +13,7 @@ def get_runner_args(c) -> list[str]:
 
 
 @task(name="run", default=True)
-def run_act(c, job_id=None, args_str = None):
+def run_act(c, job_id=None, args_str=None):
     """Run github actions locally with `act` (requires act installation and docker to be running)"""
     args_str = args_str or ""
     args = [

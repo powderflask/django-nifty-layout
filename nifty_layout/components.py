@@ -40,7 +40,9 @@ FieldFormatter: TypeAlias = Callable[[Any, object, AccessorSpec, ...], str]
 FieldLabeller: TypeAlias = Callable[[object, AccessorSpec, ...], str]
 
 
-def get_field_display(value: Any, record: object | models.Model, accessor: AccessorSpec, **unused) -> str:
+def get_field_display(
+    value: Any, record: object | models.Model, accessor: AccessorSpec, **unused
+) -> str:
     """Return the display value for the given accessor of given object, which could be a django Model instance.
 
     Returns a display value of the accessor field on record, using value as a default.
@@ -79,7 +81,9 @@ def field_labeller(obj: object | models.Model, accessor: AccessorSpec, **unused)
     return label
 
 
-def get_formatted_labeller(labeller: Labeller, formatter: Callable[[str], str]) -> Labeller:
+def get_formatted_labeller(
+    labeller: Labeller, formatter: Callable[[str], str]
+) -> Labeller:
     def formatted_labeller(*args, **kwargs):
         return formatter(labeller(*args, **kwargs))
 
@@ -255,10 +259,11 @@ class BaseNode(Iterable, abc.ABC):
         return data
 
     def get_formatted_value(self, data: Any) -> str | Any:
-        """Extract and return a formatted presentation value for this Node from the given data object  """
+        """Extract and return a formatted presentation value for this Node from the given data object"""
         return (
             self.formatter(self.get_raw_value(data), record=data, node=self)
-            if self.formatter else self.get_raw_value(data)
+            if self.formatter
+            else self.get_raw_value(data)
         )
 
     def get_label(self, data: Any) -> str | None:

@@ -4,12 +4,8 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent
 print(BASE_DIR)
 
-SECRET_KEY = 'django-insecure'
+SECRET_KEY = "django-insecure"
 
 DEBUG = True
 
-INSTALLED_APPS = [
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'nifty_layout'
-]
+INSTALLED_APPS = ["django.contrib.auth", "django.contrib.contenttypes", "nifty_layout"]

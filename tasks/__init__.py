@@ -1,7 +1,5 @@
 from invoke import Collection
 
-from . import clean, deps, docs, pypi, tox, act
+from . import act, clean, deps, docs, pypi, tox
 
-namespace = Collection(
-    clean, deps, docs, tox, pypi, act
-)
+namespace = Collection(clean, deps, docs, tox, pypi, act)

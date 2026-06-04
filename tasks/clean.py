@@ -1,14 +1,19 @@
 from invoke import task
+
 import tasks.docs as docs_task
 
-get_args = lambda c, section: (c, c.config.clean[section].cleans, c.config.clean[section].paths)
+get_args = lambda c, section: (
+    c,
+    c.config.clean[section].cleans,
+    c.config.clean[section].paths,
+)
 
 
 def clean_files(c, cleans: str, paths: list[str]):
     cmd = f"rm -fr {' '.join(paths)}"
     print(f"Cleaning {cleans} with:\033[0m\n  \033[35m{cmd}\033[0m")
     c.run(cmd)
-    print(f"\033[32mDone!\033[0m")
+    print("\033[32mDone!\033[0m")
 
 
 @task(name="build")
