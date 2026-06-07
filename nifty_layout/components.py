@@ -47,7 +47,7 @@ def get_field_display(
 
     Returns a display value of the accessor field on record, using value as a default.
     Looks for magic attribute / method: `get_foo_display` on obj, otherwise returns str(raw_value)
-    Returns default value if attribute does not exist or has a null value.
+    Returns default value if attribute does not exist or has a null value and empty string if default value is null.
     """
     accessor = get_accessor(accessor)
     penultimate, field_name = accessor.penultimate(record)
@@ -59,7 +59,9 @@ def get_field_display(
             display = accessor.resolve(record) or value
         except ValueError:
             display = value
-    return str(display() if callable(display) else display)
+    if callable(display):
+        display = display()
+    return str(display) if display is not None else ""
 
 
 def field_labeller(obj: object | models.Model, accessor: AccessorSpec, **unused) -> str:
